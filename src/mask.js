@@ -56,7 +56,7 @@ angular.module('ui.mask', [])
 
                                 // If the mask is processed, then we need to update the value
                                 if (maskProcessed) {
-                                    eventHandler();
+                                    eventHandler({}, true);
                                 }
                             }
 
@@ -338,7 +338,7 @@ angular.module('ui.mask', [])
                                 setCaretPosition(this, iElement.val().length);
                             }
 
-                            function eventHandler(e) {
+                            function eventHandler(e, silent) {
                                 /*jshint validthis: true */
                                 e = e || {};
                                 // Allows more efficient minification
@@ -408,7 +408,11 @@ angular.module('ui.mask', [])
                                 oldValue = valMasked;
                                 oldValueUnmasked = valUnmasked;
                                 iElement.val(valMasked);
-                                controller.$setViewValue(valUnmasked);
+                                if (silent) {
+                                    controller.$viewValue = valUnmasked;
+                                } else {
+                                    controller.$setViewValue(valUnmasked);
+                                }
 
                                 // Caret Repositioning
                                 // ===================
