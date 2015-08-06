@@ -23,6 +23,8 @@ angular.module('ui.mask', [])
                         var options = maskConfig;
 
                         return function uiMaskLinkingFunction(scope, iElement, iAttrs, controller) {
+                            var cfg = scope.$eval(iAttrs['uiMask']);
+
                             var maskProcessed = false, eventsBound = false,
                                     maskCaretMap, maskPatterns, maskPlaceholder, maskComponents,
                                     // Minimum required length of the value to be considered valid
@@ -34,7 +36,8 @@ angular.module('ui.mask', [])
                                     // Vars used exclusively in eventHandler()
                                     oldValue, oldValueUnmasked, oldCaretPosition, oldSelectionLength;
 
-                            function initialize(maskAttr) {
+                            cfg.initialize = function () {
+                                var maskAttr = cfg.mask;
                                 if (!angular.isDefined(maskAttr)) {
                                     return uninitialize();
                                 }
@@ -111,7 +114,6 @@ angular.module('ui.mask', [])
                                 linkOptions = options;
                             }
 
-                            iAttrs.$observe('uiMask', initialize);
                             if (angular.isDefined(iAttrs.uiMaskPlaceholder)) {
                                 iAttrs.$observe('uiMaskPlaceholder', initPlaceholder);
                             }
