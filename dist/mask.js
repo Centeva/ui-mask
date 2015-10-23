@@ -1,7 +1,7 @@
 /*!
  * angular-ui-mask
  * https://github.com/angular-ui/ui-mask
- * Version: 1.4.7 - 2015-10-17T13:33:56.926Z
+ * Version: 1.4.7 - 2015-10-23T22:50:01.687Z
  * License: MIT
  */
 
@@ -19,7 +19,8 @@ angular.module('ui.mask', [])
                 '*': /[a-zA-Z0-9]/
             },
             clearOnBlur: true,
-            eventsToHandle: ['input', 'keyup', 'click', 'focus']
+            eventsToHandle: ['input', 'keyup', 'click', 'focus'],
+            silentEvents: ['click', 'focus']
         })
         .directive('uiMask', ['uiMaskConfig', function(maskConfig) {
                 function isFocused (elem) {
@@ -326,7 +327,8 @@ angular.module('ui.mask', [])
                                         valueMasked = '';
                                         iElement.val('');
                                         scope.$apply(function() {
-                                            controller.$setViewValue('');
+                                            //don't call $setViewValue to avoid changing $pristine state.
+                                            controller.$viewValue = '';
                                         });
                                     }
                                 }
@@ -452,7 +454,13 @@ angular.module('ui.mask', [])
                                 iElement.val(valMasked);
                                 
                                 scope.$apply(function() {
-                                    controller.$setViewValue(valUnmasked); // $setViewValue should be run in angular context, otherwise the changes will be invisible to angular and user code.
+                                    // $setViewValue/$viewValue should be run in angular context, otherwise the changes will be invisible to angular and user code.
+                                    if (linkOptions.silentEvents.indexOf(eventType) !== -1) {
+                                        //If event type is one of the silent ones, don't use $setViewValue to preserve pristine state.
+                                        controller.$viewValue = valUnmasked;
+                                    } else {
+                                        controller.$setViewValue(valUnmasked); 
+                                    }
                                 });                                
 
                                 // Caret Repositioning
