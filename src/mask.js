@@ -61,6 +61,11 @@ angular.module('ui.mask', [])
                                     iElement.val(maskValue(unmaskValue(iElement.val())));
                                 }
                             }
+
+                            function initPlaceholderChar() {
+                                return initialize(iAttrs.uiMask);
+                            }
+
                             var modelViewValue = false;
                             iAttrs.$observe('modelViewValue', function(val) {
                                 if (val === 'true') {
@@ -112,14 +117,16 @@ angular.module('ui.mask', [])
                                                 if (current[i] === undefined) {
                                                     current[i] = angular.copy(original[i]);
                                                 } else {
-                                                    if (angular.isObject(current[i])) {
-                                                        angular.extend(current[i], original[i]);
+                                                    if (angular.isObject(current[i]) && !angular.isArray(current[i])) {
+                                                        current[i] = angular.extend({}, original[i], current[i]);
                                                     }
                                                 }
                                             }
                                         }
                                         return current;
                                     })(options, linkOptions[0]);
+                                } else {
+                                    linkOptions = options;  //gotta be a better way to do this..
                                 }
                             } else {
                                 linkOptions = options;
@@ -132,6 +139,10 @@ angular.module('ui.mask', [])
                             else {
                                 iAttrs.$observe('placeholder', initPlaceholder);
                             }
+                            if (angular.isDefined(iAttrs.uiMaskPlaceholderChar)) {
+                                iAttrs.$observe('uiMaskPlaceholderChar', initPlaceholderChar);
+                            }
+
                             controller.$formatters.push(formatter);
                             controller.$parsers.push(parser);
 
@@ -243,12 +254,14 @@ angular.module('ui.mask', [])
                             }
 
                             function getPlaceholderChar(i) {
-                                var placeholder = angular.isDefined(iAttrs.uiMaskPlaceholder) ? iAttrs.uiMaskPlaceholder : iAttrs.placeholder;
+                                var placeholder = angular.isDefined(iAttrs.uiMaskPlaceholder) ? iAttrs.uiMaskPlaceholder : iAttrs.placeholder,
+                                    defaultPlaceholderChar;
 
-                                if (typeof placeholder !== 'undefined' && placeholder[i]) {
+                                if (angular.isDefined(placeholder) && placeholder[i]) {
                                     return placeholder[i];
                                 } else {
-                                    return '_';
+                                    defaultPlaceholderChar = angular.isDefined(iAttrs.uiMaskPlaceholderChar) && iAttrs.uiMaskPlaceholderChar ? iAttrs.uiMaskPlaceholderChar : '_';
+                                    return (defaultPlaceholderChar.toLowerCase() === 'space') ? ' ' : defaultPlaceholderChar[0];
                                 }
                             }
 
@@ -271,7 +284,7 @@ angular.module('ui.mask', [])
                                 maskPatterns = [];
                                 maskPlaceholder = '';
 
-                                if (typeof mask === 'string') {
+                                if (angular.isString(mask)) {
                                     minRequiredLength = 0;
 
                                     var isOptional = false,
@@ -290,6 +303,8 @@ angular.module('ui.mask', [])
                                             if (!isOptional) {
                                                 minRequiredLength++;
                                             }
+
+                                            isOptional = false;
                                         }
                                         else if (chr === '?') {
                                             isOptional = true;
@@ -330,26 +345,26 @@ angular.module('ui.mask', [])
                             }
                             
                             function triggerChangeEvent(element) {
-                          		var change;
-                          		if (typeof window.Event == 'function' && !element.fireEvent) {
-                          			// modern browsers and Edge
-                          			change = new Event('change', {
-                          				view: window,
-                          				bubbles: true,
-                          				cancelable: false
-                          			});
-                          			element.dispatchEvent(change);
-                          		} else if ('createEvent' in document) {
-                          			// older browsers
-                          			change = document.createEvent('HTMLEvents');
-                          			change.initEvent('change', false, true);
-                          			element.dispatchEvent(change);
-                          		}
-                          		else if (element.fireEvent) {
-                          			// IE <= 11
-                          			element.fireEvent('onchange');
-                          		}
-                          	}
+                                var change;
+                                if (angular.isFunction(window.Event) && !element.fireEvent) {
+                                    // modern browsers and Edge
+                                    change = new Event('change', {
+                                        view: window,
+                                        bubbles: true,
+                                        cancelable: false
+                                    });
+                                    element.dispatchEvent(change);
+                                } else if ('createEvent' in document) {
+                                    // older browsers
+                                    change = document.createEvent('HTMLEvents');
+                                    change.initEvent('change', false, true);
+                                    element.dispatchEvent(change);
+                                }
+                                else if (element.fireEvent) {
+                                    // IE <= 11
+                                    element.fireEvent('onchange');
+                                }
+                            }
 
                             function mouseDownUpHandler(e) {
                                 if (e.type === 'mousedown') {
