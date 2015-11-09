@@ -1,7 +1,7 @@
 /*!
  * angular-ui-mask
  * https://github.com/angular-ui/ui-mask
- * Version: 1.5.1 - 2015-11-09T22:27:07.694Z
+ * Version: 1.5.1 - 2015-11-09T22:32:56.137Z
  * License: MIT
  */
 
@@ -414,6 +414,7 @@ angular.module('ui.mask', [])
                                         valMasked,
                                         valUnmasked = unmaskValue(val),
                                         valUnmaskedOld = oldValueUnmasked,
+										valAltered = false,
                                         caretPos = getCaretPosition(this) || 0,
                                         caretPosOld = oldCaretPosition || 0,
                                         caretPosDelta = caretPos - caretPosOld,
@@ -459,6 +460,7 @@ angular.module('ui.mask', [])
                                     var charIndex = maskCaretMap.indexOf(caretPos);
                                     // Strip out non-mask character that user would have deleted if mask hadn't been in the way.
                                     valUnmasked = valUnmasked.substring(0, charIndex) + valUnmasked.substring(charIndex + 1);
+                                    valAltered = true;
                                 }
 
                                 // Update values
@@ -468,15 +470,17 @@ angular.module('ui.mask', [])
                                 oldValueUnmasked = valUnmasked;
                                 iElement.val(valMasked);
                                 
-                                scope.$apply(function() {
-                                    // $setViewValue/$viewValue should be run in angular context, otherwise the changes will be invisible to angular and user code.
-                                    if (linkOptions.silentEvents.indexOf(eventType) !== -1) {
-                                        //If event type is one of the silent ones, don't use $setViewValue to preserve pristine state.
-                                        controller.$viewValue = valUnmasked;
-                                    } else {
-                                        controller.$setViewValue(valUnmasked); 
-                                    }
-                                });                                
+                                if (valAltered) {
+                                	scope.$apply(function () {
+                                		// $setViewValue/$viewValue should be run in angular context, otherwise the changes will be invisible to angular and user code.
+                                		if (linkOptions.silentEvents.indexOf(eventType) !== -1) {
+                                			//If event type is one of the silent ones, don't use $setViewValue to preserve pristine state.
+                                			controller.$viewValue = valUnmasked;
+                                		} else {
+                                			controller.$setViewValue(valUnmasked);
+                                		}
+                                	});
+                                }
 
                                 // Caret Repositioning
                                 // ===================
