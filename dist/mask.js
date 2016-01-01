@@ -1,7 +1,7 @@
 /*!
  * angular-ui-mask
  * https://github.com/angular-ui/ui-mask
- * Version: 1.4.7 - 2015-10-23T22:50:01.687Z
+ * Version: 1.4.7 - 2016-01-01T16:49:28.519Z
  * License: MIT
  */
 
@@ -455,7 +455,7 @@ angular.module('ui.mask', [])
                                 
                                 scope.$apply(function() {
                                     // $setViewValue/$viewValue should be run in angular context, otherwise the changes will be invisible to angular and user code.
-                                    if (linkOptions.silentEvents.indexOf(eventType) !== -1) {
+                                    if ((linkOptions.silentEvents || null) !== null && linkOptions.silentEvents.indexOf(eventType) !== -1) {
                                         //If event type is one of the silent ones, don't use $setViewValue to preserve pristine state.
                                         controller.$viewValue = valUnmasked;
                                     } else {
