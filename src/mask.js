@@ -61,11 +61,6 @@ angular.module('ui.mask', [])
                                     iElement.val(maskValue(unmaskValue(iElement.val())));
                                 }
                             }
-
-                            function initPlaceholderChar() {
-                                return initialize(iAttrs.uiMask);
-                            }
-
                             var modelViewValue = false;
                             iAttrs.$observe('modelViewValue', function(val) {
                                 if (val === 'true') {
@@ -117,16 +112,14 @@ angular.module('ui.mask', [])
                                                 if (current[i] === undefined) {
                                                     current[i] = angular.copy(original[i]);
                                                 } else {
-                                                    if (angular.isObject(current[i]) && !angular.isArray(current[i])) {
-                                                        current[i] = angular.extend({}, original[i], current[i]);
+                                                    if (angular.isObject(current[i])) {
+                                                        angular.extend(current[i], original[i]);
                                                     }
                                                 }
                                             }
                                         }
                                         return current;
                                     })(options, linkOptions[0]);
-                                } else {
-                                    linkOptions = options;  //gotta be a better way to do this..
                                 }
                             } else {
                                 linkOptions = options;
@@ -139,10 +132,6 @@ angular.module('ui.mask', [])
                             else {
                                 iAttrs.$observe('placeholder', initPlaceholder);
                             }
-                            if (angular.isDefined(iAttrs.uiMaskPlaceholderChar)) {
-                                iAttrs.$observe('uiMaskPlaceholderChar', initPlaceholderChar);
-                            }
-
                             controller.$formatters.push(formatter);
                             controller.$parsers.push(parser);
 
@@ -254,14 +243,12 @@ angular.module('ui.mask', [])
                             }
 
                             function getPlaceholderChar(i) {
-                                var placeholder = angular.isDefined(iAttrs.uiMaskPlaceholder) ? iAttrs.uiMaskPlaceholder : iAttrs.placeholder,
-                                    defaultPlaceholderChar;
+                                var placeholder = angular.isDefined(iAttrs.uiMaskPlaceholder) ? iAttrs.uiMaskPlaceholder : iAttrs.placeholder;
 
-                                if (angular.isDefined(placeholder) && placeholder[i]) {
+                                if (typeof placeholder !== 'undefined' && placeholder[i]) {
                                     return placeholder[i];
                                 } else {
-                                    defaultPlaceholderChar = angular.isDefined(iAttrs.uiMaskPlaceholderChar) && iAttrs.uiMaskPlaceholderChar ? iAttrs.uiMaskPlaceholderChar : '_';
-                                    return (defaultPlaceholderChar.toLowerCase() === 'space') ? ' ' : defaultPlaceholderChar[0];
+                                    return '_';
                                 }
                             }
 
@@ -284,7 +271,7 @@ angular.module('ui.mask', [])
                                 maskPatterns = [];
                                 maskPlaceholder = '';
 
-                                if (angular.isString(mask)) {
+                                if (typeof mask === 'string') {
                                     minRequiredLength = 0;
 
                                     var isOptional = false,
@@ -303,8 +290,6 @@ angular.module('ui.mask', [])
                                             if (!isOptional) {
                                                 minRequiredLength++;
                                             }
-
-                                            isOptional = false;
                                         }
                                         else if (chr === '?') {
                                             isOptional = true;
@@ -345,26 +330,26 @@ angular.module('ui.mask', [])
                             }
                             
                             function triggerChangeEvent(element) {
-                                var change;
-                                if (angular.isFunction(window.Event) && !element.fireEvent) {
-                                    // modern browsers and Edge
-                                    change = new Event('change', {
-                                        view: window,
-                                        bubbles: true,
-                                        cancelable: false
-                                    });
-                                    element.dispatchEvent(change);
-                                } else if ('createEvent' in document) {
-                                    // older browsers
-                                    change = document.createEvent('HTMLEvents');
-                                    change.initEvent('change', false, true);
-                                    element.dispatchEvent(change);
-                                }
-                                else if (element.fireEvent) {
-                                    // IE <= 11
-                                    element.fireEvent('onchange');
-                                }
-                            }
+                          		var change;
+                          		if (typeof window.Event == 'function' && !element.fireEvent) {
+                          			// modern browsers and Edge
+                          			change = new Event('change', {
+                          				view: window,
+                          				bubbles: true,
+                          				cancelable: false
+                          			});
+                          			element.dispatchEvent(change);
+                          		} else if ('createEvent' in document) {
+                          			// older browsers
+                          			change = document.createEvent('HTMLEvents');
+                          			change.initEvent('change', false, true);
+                          			element.dispatchEvent(change);
+                          		}
+                          		else if (element.fireEvent) {
+                          			// IE <= 11
+                          			element.fireEvent('onchange');
+                          		}
+                          	}
 
                             function mouseDownUpHandler(e) {
                                 if (e.type === 'mousedown') {
@@ -404,7 +389,6 @@ angular.module('ui.mask', [])
                                         valMasked,
                                         valUnmasked = unmaskValue(val),
                                         valUnmaskedOld = oldValueUnmasked,
-										valAltered = false,
                                         caretPos = getCaretPosition(this) || 0,
                                         caretPosOld = oldCaretPosition || 0,
                                         caretPosDelta = caretPos - caretPosOld,
@@ -450,7 +434,6 @@ angular.module('ui.mask', [])
                                     var charIndex = maskCaretMap.indexOf(caretPos);
                                     // Strip out non-mask character that user would have deleted if mask hadn't been in the way.
                                     valUnmasked = valUnmasked.substring(0, charIndex) + valUnmasked.substring(charIndex + 1);
-                                    valAltered = true;
                                 }
 
                                 // Update values
@@ -460,17 +443,15 @@ angular.module('ui.mask', [])
                                 oldValueUnmasked = valUnmasked;
                                 iElement.val(valMasked);
                                 
-                                if (valAltered) {
-                                	scope.$apply(function () {
-                                		// $setViewValue/$viewValue should be run in angular context, otherwise the changes will be invisible to angular and user code.
-                                		if (linkOptions.silentEvents.indexOf(eventType) !== -1) {
-                                			//If event type is one of the silent ones, don't use $setViewValue to preserve pristine state.
-                                			controller.$viewValue = valUnmasked;
-                                		} else {
-                                			controller.$setViewValue(valUnmasked);
-                                		}
-                                	});
-                                }
+                                scope.$apply(function() {
+                                    // $setViewValue/$viewValue should be run in angular context, otherwise the changes will be invisible to angular and user code.
+                                    if ((linkOptions.silentEvents || null) === null || linkOptions.silentEvents.indexOf(eventType) !== -1) {
+                                        //If event type is one of the silent ones, don't use $setViewValue to preserve pristine state.
+                                        controller.$viewValue = valUnmasked;
+                                    } else {
+                                        controller.$setViewValue(valUnmasked); 
+                                    }
+                                });                                
 
                                 // Caret Repositioning
                                 // ===================
